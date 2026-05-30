@@ -122,6 +122,17 @@ while True:
 
                 print(f"[ENVIADO] -> {cliente}")
 
+        elif tipo == "FIND":
+            try:
+                zona_cliente = controlador.clientes[endereco]
+                msg = zona_cliente
+                servidor.sendto(msg.encode(), endereco)
+            except:
+                msg = "NONE"
+                servidor.sendto(msg.encode(), endereco)
+            print("Mensagem enviada")
+                
+
     except KeyboardInterrupt:
         print("\nServidor encerrado.")
         break
