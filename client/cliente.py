@@ -3,6 +3,22 @@ import socket
 sock = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
 
 server_addr = ('localhost', 5000)
+status = ""
+zone = ""
+
+def get_status():
+    msg = "FIND"
+    sock.sendto(msg.encode(), server_addr)
+    response, addr = sock.recvfrom(1024)
+    rsp = response.decode()
+    print(rsp)
+
+    if rsp == "NONE":
+        status = "UNREGISTERED"
+        zone = ""
+    else:
+        status = "REGISTERED"
+        zone = rsp
 
 def header():
     print("------------------------------------------------------------------------------------------------")
@@ -10,6 +26,7 @@ def header():
     print("------------------------------------------------------------------------------------------------\n")
 
 while True:
+    get_status()
     header()
     print("Cliente não está inscrito em nenhuma zona. Deseja inscrever-se?\n")
     print("1 - Sim")
@@ -25,7 +42,7 @@ while True:
             header()
             print("> Inscrever\n")
             zona = input("Digite a sua zona: ")
-            msg = f"WATCH|ZONA_{zona.upper}"
+            msg = f"WATCH|Zona_{zona.upper()}"
             sock.sendto(msg.encode(), server_addr)
             print("\033c", end="")
             print("Mensagem enviada.")
