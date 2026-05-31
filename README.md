@@ -1,398 +1,329 @@
-**Universidade Federal de Pernambuco**  
-**Centro de Informática**  
-**Disciplina:** CIN0143 - Introdução aos Sistemas Distribuídos e Redes de Computadores  
-**Docente:** David J M Cavalcanti  
-**Atividade:** APS02 - Sistemas Distribuídos com Socket UDP  
+# APS02 – Sistema Distribuído de Alertas da Defesa Civil utilizando Socket UDP
+
+## Universidade Federal de Pernambuco
+
+**Centro de Informática (CIn)**
+**Disciplina:** CIN0143 - Introdução aos Sistemas Distribuídos e Redes de Computadores
+**Docente:** Prof. David J. M. Cavalcanti
 
 ---
 
-## Introdução
+# Equipe 4
 
-Este projeto implementa um **Sistema de Alertas da Defesa Civil** usando **Socket UDP** para comunicação entre clientes, servidor e operador. O sistema permite que clientes se inscrevam em zonas de risco e recebam alertas em tempo real quando a Defesa Civil emite avisos para essas zonas.
-
-### Características Principais
-
-- ✅ Comunicação via **Socket UDP** 
-- ✅ Gerenciamento de **3 zonas de risco** (Zona_A, Zona_B, Zona_C)
-- ✅ **Inscrição e desinscrição** de clientes em zonas
-- ✅ **Broadcast de alertas** para múltiplos clientes
-- ✅ **Interface de operador** para simulação da Defesa Civil
-- ✅ **Testes automatizados** para validação do sistema
+| Integrante         | Responsabilidade                         |
+| ------------------ | ---------------------------------------- |
+| Guilherme Barbosa  | Servidor UDP e Gerenciamento de Clientes |
+| Gabriel Fonseca    | Gerenciamento de Zonas de Risco          |
+| Rodrigo de Andrade | Sistema de Alertas (Push)                |
+| Iranildo Felipe    | Cliente UDP                              |
+| Thiago Bernardo    | Operador, Testes e Documentação          |
 
 ---
 
-## Arquitetura do Sistema
+# 1. Introdução
+
+Os sistemas distribuídos permitem que múltiplos dispositivos cooperem através de uma rede para executar tarefas de forma integrada. Uma das aplicações mais relevantes desse paradigma é a disseminação rápida de informações críticas para diversos usuários simultaneamente.
+
+Neste projeto foi desenvolvido um **Sistema de Alertas da Defesa Civil** utilizando comunicação baseada em **Socket UDP**, permitindo que usuários se inscrevam em zonas de risco específicas e recebam alertas emitidos por um operador responsável.
+
+A solução segue o modelo **Cliente-Servidor**, em que um servidor central gerencia inscrições de clientes, organiza as zonas de risco e distribui mensagens de alerta para os usuários cadastrados.
+
+---
+
+# 2. Objetivos
+
+O objetivo deste projeto é implementar uma aplicação distribuída capaz de:
+
+* Utilizar comunicação baseada em UDP;
+* Permitir inscrição e remoção de clientes em zonas de risco;
+* Gerenciar múltiplos clientes simultaneamente;
+* Distribuir alertas em tempo real;
+* Simular a atuação de um operador da Defesa Civil;
+* Aplicar conceitos fundamentais de Sistemas Distribuídos.
+
+---
+
+# 3. Fundamentação Teórica
+
+## 3.1 User Datagram Protocol (UDP)
+
+O UDP (User Datagram Protocol) é um protocolo da camada de transporte que permite a troca de mensagens entre aplicações sem a necessidade de estabelecer uma conexão prévia.
+
+Diferentemente do TCP, o UDP possui menor sobrecarga de comunicação, oferecendo maior velocidade na transmissão dos dados. Por esse motivo, é amplamente utilizado em aplicações que exigem rapidez na entrega das mensagens, como sistemas de monitoramento, streaming e alertas emergenciais.
+
+Neste projeto, o UDP foi escolhido por sua simplicidade e eficiência na distribuição de alertas em tempo real.
+
+---
+
+## 3.2 Arquitetura Cliente-Servidor
+
+O sistema adota uma arquitetura Cliente-Servidor.
+
+O servidor central é responsável por:
+
+* Receber mensagens dos clientes;
+* Gerenciar inscrições em zonas de risco;
+* Manter o cadastro dos clientes;
+* Distribuir alertas emitidos pelo operador.
+
+Os clientes atuam como receptores das informações, enquanto o operador representa a entidade responsável pela emissão dos alertas.
+
+---
+
+# 4. Arquitetura da Solução
+
+A arquitetura do sistema é composta por três elementos principais:
+
+1. Servidor UDP;
+2. Clientes UDP;
+3. Operador da Defesa Civil.
+
+Fluxo geral de funcionamento:
+
+1. O cliente se inscreve em uma zona de risco.
+2. O servidor registra a inscrição.
+3. O operador envia um alerta para uma determinada zona.
+4. O servidor identifica os clientes inscritos.
+5. O alerta é distribuído para todos os destinatários daquela zona.
+
+Este comportamento implementa uma versão simplificada do padrão **Publish/Subscribe**, em que os clientes recebem apenas os eventos relacionados à zona de interesse.
+
+---
+
+# 5. Estrutura de Dados
+
+As zonas de risco são armazenadas através de estruturas de dados que associam cada região aos respectivos clientes inscritos.
+
+Exemplo conceitual:
 
 ```
-                    ┌──────────────────────┐
-                    │   SERVIDOR UDP       │
-                    │   (localhost:5000)   │
-                    └──────────────────────┘
-                              │
-                ┌─────────────┼─────────────┐
-                │             │             │
-            ┌───────┐   ┌──────────┐   ┌──────────┐
-            │CLIENT1│   │ CLIENT2  │   │ CLIENT3  │
-            │Zona_A │   │ Zona_B   │   │ Zona_C   │
-            └───────┘   └──────────┘   └──────────┘
-                │             │             │
-                └─────────────┼─────────────┘
-                              ▲
-                              │
-                    ┌──────────────────────┐
-                    │   OPERADOR DEFESA    │
-                    │      CIVIL           │
-                    │  (Envia Alertas)     │
-                    └──────────────────────┘
+zonas = {
+    "Zona_A": [cliente1, cliente2],
+    "Zona_B": [cliente3],
+    "Zona_C": []
+}
 ```
+
+Cada cliente é identificado pelo endereço IP e pela porta UDP utilizada durante a comunicação.
 
 ---
 
-## Responsabilidades das Pessoas
+# 6. Protocolo de Comunicação
 
-| Pessoa | Responsabilidade | Status |
-|--------|------------------|--------|
-| **Guilherme Barbosa** | Servidor UDP e Gerenciamento de Clientes | ✅ Completo |
-| **Gabriel Fonseca** | Gerenciamento de Zonas de Risco | ✅ Completo |
-| **Rodrigo de Andrade** | Sistema de Alertas (Push) | ⏳ Em Desenvolvimento |
-| **Iranildo Felipe** | Cliente UDP | ✅ Completo |
-| **Thiago Bernardo** | Operador, Testes e Documentação | ✅ Completo |
+A comunicação entre os componentes utiliza mensagens textuais delimitadas pelo caractere `|`.
 
-### Detalhes de Cada Responsabilidade
+## Inscrição em Zona
 
-#### Guilherme - Servidor UDP
-- Criar servidor UDP escutando em `localhost:5000`
-- Receber mensagens dos clientes e operador
-- Interpretar comandos (WATCH, UNWATCH, ALERT, FIND)
-- Encaminhar requisições para outros módulos
+```
+WATCH|Zona_A
+```
 
-#### Gabriel - Gerenciamento de Zonas
-- Manter estrutura de dados das zonas
-- Controlar inscrições de clientes
-- Manter lista de clientes por zona
-- Garantir remoção de clientes desconectados
-
-#### Rodrigo - Sistema de Alertas (Push)
-**[FALTANDO - Aguardando implementação]**
-- Receber alertas do operador
-- Identificar zona afetada
-- Distribuir alerta para todos os inscritos
-- Garantir envio para múltiplos clientes simultaneamente
-
-#### Iranildo - Cliente UDP
-- Permitir inscrição em zonas
-- Manter socket UDP ativo
-- Receber e exibir alertas
-- Interface interativa via terminal
-
-#### Thiago - Operador, Testes e Documentação
-- ✅ Criar simulador do operador da Defesa Civil
-- ✅ Enviar alertas ao servidor
-- ✅ Realizar testes integrados
-- ✅ Produzir documentação do projeto
+Solicita a inscrição do cliente em uma zona de risco.
 
 ---
 
-## Estrutura de Arquivos
+## Cancelamento de Inscrição
 
 ```
-APS02-Grupo4-main/
-├── README.md                 # Este arquivo
-├── operador_teste.py         # Simulador do operador (Pessoa 5)
-├── testes.py                 # Testes automatizados (Pessoa 5)
+UNWATCH|Zona_A
+```
+
+Remove o cliente da zona especificada.
+
+---
+
+## Consulta de Zona
+
+```
+FIND
+```
+
+Retorna a zona atualmente associada ao cliente.
+
+---
+
+## Envio de Alerta
+
+```
+ALERT|Zona_A|Risco de deslizamento
+```
+
+Solicita o envio de um alerta para todos os clientes inscritos na zona especificada.
+
+---
+
+# 7. Implementação
+
+O projeto foi desenvolvido utilizando a linguagem Python e a biblioteca Socket para comunicação em rede.
+
+A implementação foi dividida em módulos independentes:
+
+* Servidor UDP;
+* Gerenciamento de Clientes;
+* Gerenciamento de Zonas;
+* Sistema de Alertas;
+* Cliente UDP;
+* Operador da Defesa Civil.
+
+Essa modularização facilita a manutenção, os testes e futuras evoluções do sistema.
+
+---
+
+# 8. Estrutura do Projeto
+
+```
+APS02-Grupo4/
+
+├── README.md
+├── operador_teste.py
+├── testes.py
+│
 ├── server/
-│   ├── servidor.py           # Servidor UDP principal (Pessoa 1)
-│   ├── protocolo.py          # Protocolo de mensagens
-│   ├── zona.py               # Gerenciamento de zonas (Pessoa 2)
-│   └── clientes.py           # Registro de clientes
+│   ├── servidor.py
+│   ├── protocolo.py
+│   ├── clientes.py
+│   └── zona.py
+│
 └── client/
-    └── cliente.py            # Cliente UDP (Pessoa 4)
+    └── cliente.py
 ```
 
 ---
 
-## Protocolo de Comunicação
+# 9. Execução
 
-O sistema utiliza um protocolo baseado em **mensagens delimitadas por pipe (`|`)**:
+## Iniciar o Servidor
 
-### Comando: WATCH (Inscrever em Zona)
-
-**Formato:** `WATCH|Zona_X`
-
-**Origem:** Cliente  
-**Destino:** Servidor  
-**Descrição:** Cliente se inscreve em uma zona para receber alertas
-
-**Exemplo:**
 ```
-Cliente → Servidor: WATCH|Zona_A
-Servidor → Cliente: OK|Inscrito em Zona_A
-```
-
----
-
-### Comando: UNWATCH (Desinscrever de Zona)
-
-**Formato:** `UNWATCH|Zona_X`
-
-**Origem:** Cliente  
-**Destino:** Servidor  
-**Descrição:** Cliente se desinscreve de uma zona
-
-**Exemplo:**
-```
-Cliente → Servidor: UNWATCH|Zona_B
-Servidor → Cliente: OK|Removido de Zona_B
-```
-
----
-
-### Comando: ALERT (Enviar Alerta)
-
-**Formato:** `ALERT|Zona_X|Mensagem`
-
-**Origem:** Operador  
-**Destino:** Servidor  
-**Descrição:** Operador envia alerta para todos os inscritos em uma zona
-
-**Exemplo:**
-```
-Operador → Servidor: ALERT|Zona_A|Risco de deslizamento na encosta
-Servidor → Clientes: ALERTA DEFESA CIVIL
-           Zona: Zona_A
-           Mensagem: Risco de deslizamento na encosta
-```
-
----
-
-### Comando: FIND (Verificar Zona)
-
-**Formato:** `FIND`
-
-**Origem:** Cliente  
-**Destino:** Servidor  
-**Descrição:** Cliente verifica em qual zona está inscrito
-
-**Exemplo:**
-```
-Cliente → Servidor: FIND
-Servidor → Cliente: Zona_A
-           (ou NONE se não inscrito)
-```
-
----
-
-### Comando: ERRO (Mensagem de Erro)
-
-**Formato:** `ERRO|Descrição`
-
-**Origem:** Servidor  
-**Destino:** Cliente  
-**Descrição:** Servidor responde com erro se mensagem for inválida
-
-**Exemplo:**
-```
-Servidor → Cliente: ERRO|Mensagem inválida
-```
-
----
-
-## Como Executar
-
-### Pré-requisitos
-
-- Python 3.7+
-- Sistema operacional: Windows, Linux ou macOS
-- Terminal/Console
-
-### Passo 1: Iniciar o Servidor
-
-Abra um terminal e execute:
-
-```bash
 cd server
 python servidor.py
 ```
 
-**Saída Esperada:**
-```
-==================================================
-Servidor UDP iniciado na porta 5000
-==================================================
-```
-
 ---
 
-### Passo 2: Iniciar o Cliente (em outro terminal)
+## Iniciar o Cliente
 
-```bash
+```
 cd client
 python cliente.py
 ```
 
-**Interface do Cliente:**
-```
-------------------------------------------------------------------------------------------------
------------------------------- Sistema de Alertas da Defesa Civil ------------------------------
-------------------------------------------------------------------------------------------------
-
-Cliente não está inscrito em nenhuma zona. Deseja inscrever-se?
-
-1 - Sim
-2 - Listar zonas
-3 - Não (sair)
--> 
-```
-
 ---
 
-### Passo 3: Iniciar o Operador (em outro terminal)
+## Iniciar o Operador
 
-```bash
+```
 python operador_teste.py
 ```
 
-**Interface do Operador:**
+---
+
+# 10. Casos de Uso
+
+## Inscrição em uma Zona
+
+O cliente seleciona uma zona de risco para receber alertas.
+
+Exemplo:
+
 ```
-================================================================================
- SISTEMA DE ALERTAS DA DEFESA CIVIL - OPERADOR
-================================================================================
-
-1 - Enviar Alerta
-2 - Ver Histórico de Alertas
-3 - Listar Zonas Disponíveis
-4 - Enviar Alerta Rápido (Predefinido)
-5 - Sair
-
-Digite sua opção (1-5): 
+WATCH|Zona_A
 ```
 
 ---
 
-## Testes Integrados
+## Consulta da Zona Atual
 
-### Executando os Testes
+O cliente pode consultar sua inscrição atual.
 
-Para executar os testes automatizados:
+Exemplo:
 
-```bash
-python testes.py
 ```
-
-### Testes Disponíveis
-
-O arquivo `testes.py` contém **7 testes automatizados**:
-
-| # | Teste | Descrição |
-|---|-------|-----------|
-| 1 | Conexão Básica | Verifica se servidor responde |
-| 2 | Inscrição em Zona | Testa comando WATCH |
-| 3 | Verificar Zona | Testa comando FIND |
-| 4 | Mudar de Zona | Testa troca de zona |
-| 5 | Desinscrição | Testa comando UNWATCH |
-| 6 | Envio de Alerta | Testa broadcast de alertas |
-| 7 | Mensagem Inválida | Testa rejeição de erros |
-
-
-
-
-## 📝 Exemplos de Uso
-
-### Exemplo 1: Fluxo Básico (Cliente Inscrito e Recebendo Alerta)
-
-**Terminal 1 - Servidor:**
-```bash
-$ python server/servidor.py
-==================================================
-Servidor UDP iniciado na porta 5000
-==================================================
-
-[RECEBIDO] ('127.0.0.1', 54321) -> WATCH|Zona_A
-[INFO] ('127.0.0.1', 54321) inscrito em Zona_A
-
-[RECEBIDO] ('127.0.0.1', 54322) -> ALERT|Zona_A|Risco de deslizamento
-[ALERTA] Enviando alerta para Zona_A
-[ENVIADO] -> ('127.0.0.1', 54321)
-```
-
-**Terminal 2 - Cliente:**
-```bash
-$ python client/cliente.py
-# [Cliente escolhe opção 1, inscreve em Zona_A]
-# [Cliente recebe ALERTA DEFESA CIVIL com a mensagem]
-```
-
-**Terminal 3 - Operador:**
-```bash
-$ python operador_teste.py
-[INFO] Operador conectado ao servidor em localhost:5000
-
-Digite sua opção (1-5): 1
-> Inscrever
-
-Digite a sua zona: A
-Informe a mensagem do alerta: Risco de deslizamento
-
-[✓] Alerta enviado com sucesso para Zona_A
+FIND
 ```
 
 ---
 
-### Exemplo 2: Múltiplos Clientes em Diferentes Zonas
+## Emissão de Alerta
 
-**Cenário:**
-- Cliente 1 inscrito em Zona_A
-- Cliente 2 inscrito em Zona_B
-- Operador envia alerta para Zona_A
+O operador envia um alerta para determinada região.
 
-**Resultado:**
-- ✅ Cliente 1 recebe alerta
-- ❌ Cliente 2 NÃO recebe alerta (não inscrito em Zona_A)
-
----
-
-### Exemplo 3: Troca de Zona
-
-**Sequência:**
-1. Cliente inscreve em Zona_A
-2. Cliente vê `FIND` → resposta: `Zona_A`
-3. Cliente inscreve em Zona_B
-4. Cliente vê `FIND` → resposta: `Zona_B` (automaticamente removido de Zona_A)
-
----
-
-## Detalhes de Implementação
-
-### Zonas Disponíveis
-
-O sistema suporta 3 zonas de risco:
-
-| Zona | Descrição | Exemplo de Alerta |
-|------|-----------|-------------------|
-| **Zona_A** | Setor Norte (Encostas e Morros) | Risco de deslizamento na encosta |
-| **Zona_B** | Setor Central (Comercial e Residencial) | Alagamento em rua principal |
-| **Zona_C** | Setor Sul (Industrial e Portuário) | Vazamento químico industrial |
-
-
-
-## Fluxograma de Estados (Cliente)
+Exemplo:
 
 ```
-┌─────────────────┐
-│   DESCONECTADO  │
-└────────┬────────┘
-         │ WATCH|Zona_X
-         ▼
-┌──────────────────┐       ┌──────────────────┐
-│ INSCRITO EM ZONA │◄──────┤ AGUARDANDO ALERTA│
-└────────┬─────────┘       └──────────────────┘
-         │                         ▲
-         │ UNWATCH|Zona_X          │
-         │                    Alerta recebido
-         ▼                         │
-┌─────────────────┐
-│   DESCONECTADO  │
-└─────────────────┘
+ALERT|Zona_A|Risco de deslizamento na encosta
 ```
 
+Todos os clientes inscritos em `Zona_A` recebem a notificação.
+
 ---
+
+# 11. Testes Realizados
+
+Foram executados testes para validação das funcionalidades do sistema.
+
+| Teste             | Objetivo                           | Resultado |
+| ----------------- | ---------------------------------- | --------- |
+| Conexão Básica    | Verificar comunicação com servidor | Aprovado  |
+| Inscrição em Zona | Validar comando WATCH              | Aprovado  |
+| Consulta de Zona  | Validar comando FIND               | Aprovado  |
+| Mudança de Zona   | Validar atualização de inscrição   | Aprovado  |
+| Desinscrição      | Validar comando UNWATCH            | Aprovado  |
+| Envio de Alerta   | Validar distribuição de mensagens  | Aprovado  |
+| Mensagem Inválida | Validar tratamento de erros        | Aprovado  |
+
+---
+
+# 12. Conceitos de Sistemas Distribuídos Aplicados
+
+Durante o desenvolvimento foram aplicados diversos conceitos abordados na disciplina:
+
+* Comunicação por troca de mensagens;
+* Comunicação cliente-servidor;
+* Protocolos de aplicação;
+* Endereçamento por IP e porta;
+* Comunicação assíncrona;
+* Distribuição de eventos;
+* Publish/Subscribe;
+* Gerenciamento de múltiplos participantes.
+
+---
+
+# 13. Contribuições dos Integrantes
+
+### Guilherme Barbosa
+
+* Implementação do servidor UDP;
+* Gerenciamento de clientes;
+* Integração dos módulos.
+
+### Gabriel Fonseca
+
+* Implementação das estruturas de zonas;
+* Controle de inscrições e cancelamentos.
+
+### Rodrigo de Andrade
+
+* Sistema de distribuição de alertas;
+* Broadcast para múltiplos clientes.
+
+### Iranildo Felipe
+
+* Desenvolvimento do cliente UDP;
+* Interface de interação via terminal.
+
+### Thiago Bernardo
+
+* Simulador do operador da Defesa Civil;
+* Testes integrados;
+* Documentação do projeto.
+
+---
+
+# 14. Conclusão
+
+O sistema desenvolvido permitiu aplicar, na prática, conceitos fundamentais de Sistemas Distribuídos por meio da implementação de um Sistema de Alertas da Defesa Civil baseado em UDP.
+
+A solução implementada possibilita o gerenciamento de clientes distribuídos, a organização de usuários em zonas de risco e a distribuição eficiente de alertas em tempo real.
+
+Os resultados obtidos demonstram o correto funcionamento da arquitetura proposta e evidenciam a aplicabilidade dos conceitos estudados ao longo da disciplina.
