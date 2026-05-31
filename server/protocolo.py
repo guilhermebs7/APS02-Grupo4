@@ -21,5 +21,9 @@ def interpretar_mensagem(msg):
             "zona": partes[1],
             "mensagem": "|".join(partes[2:])
         }
+    elif comando == "FIND":
+        return {
+            "tipo": "FIND"
+        }
 
     return None
